@@ -1,8 +1,10 @@
+import os
 import socket
 import sys
 import json
 import argparse
 from colorama import Fore, Style
+from simplecrypt import encrypt
 
 parser = argparse.ArgumentParser(description='Simple TCP socket client')
 parser.add_argument('--message', dest='message', default=' ', help='Message to send')
@@ -21,8 +23,6 @@ with open(arguments.cfg, 'r') as json_config:
 try:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.connect((config['HOST'], config['PORT']))
-        sock.sendall(bytes(arguments.message + "\n", "utf-8"))
-        received = str(sock.recv(BUFF_SIZE), "utf-8")
-        print(f"{Fore.GREEN}Got: {Style.RESET_ALL}{received}")
+        sock.sendall(bytes(encrypt(os.environ.get('SOCKET_SHARED_SECRET'), arguments.message)))
 except Exception as e:
     print(f"{Fore.RED} Bad config or unresponsive server!{Style.RESET_ALL}\n")

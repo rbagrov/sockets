@@ -1,14 +1,17 @@
+import os
 import sys
 import socketserver
 from colorama import Fore, Back, Style
 import json
 import argparse
+from simplecrypt import decrypt
 
 class Server(socketserver.BaseRequestHandler):
 
     def handle(self):
         self.data = self.request.recv(4096).strip()
-        print(f"{Fore.GREEN}Client FROM {Style.RESET_ALL}<{Fore.YELLOW}{self.client_address[0]}{Style.RESET_ALL}>>>> {Back.WHITE}{Fore.BLACK}{self.data.decode('utf-8')}{Style.RESET_ALL}\n")
+        decrypted_data = decrypt(os.environ.get('SOCKET_SHARED_SECRET'), self.data)
+        print(f"{Fore.GREEN}Client FROM {Style.RESET_ALL}<{Fore.YELLOW}{self.client_address[0]}{Style.RESET_ALL}>>>> {Back.WHITE}{Fore.BLACK}{decrypted_data.decode()}{Style.RESET_ALL}\n")
         self.request.sendall(self.data)
 
 if __name__ == "__main__":
