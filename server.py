@@ -5,14 +5,34 @@ from colorama import Fore, Back, Style
 import json
 import argparse
 from simplecrypt import decrypt
+from graphene import ObjectType, String, Schema
+import psutil
+
+
+class Query(ObjectType):
+    cpu = String()
+
+    def resolve_cpu(root, info):
+        percent = psutil.cpu_percent()
+        return f'{percent}%'
+
 
 class Server(socketserver.BaseRequestHandler):
+
+    def setup(self):
+        self.schema = Schema(query=Query)
 
     def handle(self):
         self.data = self.request.recv(4096).strip()
         decrypted_data = decrypt(os.environ.get('SOCKET_SHARED_SECRET'), self.data)
-        print(f"{Fore.GREEN}Client FROM {Style.RESET_ALL}<{Fore.YELLOW}{self.client_address[0]}{Style.RESET_ALL}>>>> {Back.WHITE}{Fore.BLACK}{decrypted_data.decode()}{Style.RESET_ALL}\n")
-        self.request.sendall(self.data)
+
+        decoded_data = decrypted_data.decode()
+
+        print(f"{Fore.GREEN}Client FROM {Style.RESET_ALL}<{Fore.YELLOW}{self.client_address[0]}{Style.RESET_ALL}>>>>{Back.WHITE}{Fore.BLACK}{decoded_data}{Style.RESET_ALL}\n")
+
+        percent = self.schema.execute(decoded_data).data[decoded_data.strip('{}')]
+        self.request.sendall(percent.encode())
+
 
 if __name__ == "__main__":
 
@@ -24,12 +44,11 @@ if __name__ == "__main__":
         print(f"{Fore.RED} Missing Config ! {Style.RESET_ALL}\n")
         sys.exit()
 
-
     with open(arguments.cfg, 'r') as json_config:
         config = json.load(json_config)
 
     try:
         with socketserver.TCPServer((config['HOST'], config['PORT']), Server) as server:
             server.serve_forever()
-    except Exception as e:
+    except Exception:
         print(f"{Fore.RED} Bad config!{Style.RESET_ALL}\n")

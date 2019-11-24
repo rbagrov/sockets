@@ -24,5 +24,9 @@ try:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.connect((config['HOST'], config['PORT']))
         sock.sendall(bytes(encrypt(os.environ.get('SOCKET_SHARED_SECRET'), arguments.message)))
-except Exception as e:
+        received = sock.recv(4096).decode()
+
+        print(f"{Fore.GREEN}Data: {Style.RESET_ALL}{received}")
+
+except Exception:
     print(f"{Fore.RED} Bad config or unresponsive server!{Style.RESET_ALL}\n")
