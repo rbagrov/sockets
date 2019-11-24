@@ -4,7 +4,7 @@ import sys
 import json
 import argparse
 from colorama import Fore, Style
-from simplecrypt import encrypt
+from simplecrypt import encrypt, decrypt
 
 parser = argparse.ArgumentParser(description='Simple TCP socket client')
 parser.add_argument('--message', dest='message', default=' ', help='Message to send')
@@ -24,7 +24,7 @@ try:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.connect((config['HOST'], config['PORT']))
         sock.sendall(bytes(encrypt(os.environ.get('SOCKET_SHARED_SECRET'), arguments.message)))
-        received = sock.recv(4096).decode()
+        received = decrypt(os.environ.get('SOCKET_SHARED_SECRET'), sock.recv(4096)).decode()
 
         print(f"{Fore.GREEN}Data: {Style.RESET_ALL}{received}")
 

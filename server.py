@@ -4,7 +4,7 @@ import socketserver
 from colorama import Fore, Back, Style
 import json
 import argparse
-from simplecrypt import decrypt
+from simplecrypt import encrypt, decrypt
 from graphene import ObjectType, String, Schema
 import psutil
 
@@ -28,10 +28,10 @@ class Server(socketserver.BaseRequestHandler):
 
         decoded_data = decrypted_data.decode()
 
-        print(f"{Fore.GREEN}Client FROM {Style.RESET_ALL}<{Fore.YELLOW}{self.client_address[0]}{Style.RESET_ALL}>>>>{Back.WHITE}{Fore.BLACK}{decoded_data}{Style.RESET_ALL}\n")
+        print(f"{Fore.GREEN}Client FROM {Style.RESET_ALL}<{Fore.YELLOW}{self.client_address[0]}{Style.RESET_ALL}>>>> {Back.WHITE}{Fore.BLACK}{decoded_data}{Style.RESET_ALL}\n")
 
         percent = self.schema.execute(decoded_data).data[decoded_data.strip('{}')]
-        self.request.sendall(percent.encode())
+        self.request.sendall(bytes(encrypt(os.environ.get('SOCKET_SHARED_SECRET'), percent.encode())))
 
 
 if __name__ == "__main__":
